@@ -1,0 +1,5 @@
+{
+  "name": "ticktock",
+  "version": "0.1.0",
+  "description": "Inline timestamps and per-turn deltas for Claude Code transcripts. Shows wall-clock time on every prompt and response, with idle time between events and response durations."
+}

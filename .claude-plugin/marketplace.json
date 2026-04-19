@@ -1,0 +1,15 @@
+{
+  "name": "ticktock",
+  "owner": {
+    "name": "k33bs",
+    "url": "https://absolutely.works"
+  },
+  "plugins": [
+    {
+      "name": "ticktock",
+      "source": "./ticktock",
+      "description": "Inline timestamps and per-turn deltas for Claude Code transcripts",
+      "version": "0.1.0"
+    }
+  ]
+}
