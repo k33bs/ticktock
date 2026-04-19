@@ -1,5 +1,71 @@
 {
   "name": "ticktock",
-  "version": "0.1.0",
-  "description": "Inline timestamps and per-turn deltas for Claude Code transcripts. Shows wall-clock time on every prompt and response, with idle time between events and response durations."
+  "version": "0.2.0",
+  "description": "Inline timestamps and per-turn deltas for Claude Code transcripts. Shows wall-clock time on every prompt and response, idle duration between events, response durations, subagent timing, and an optional session recap.",
+  "userConfig": {
+    "time_format": {
+      "description": "strftime format for the wall-clock timestamp on each line. Examples: %H:%M:%S (default), %Y-%m-%d %H:%M:%S, %l:%M %p.",
+      "sensitive": false
+    },
+    "prompt_label": {
+      "description": "Label prefixing prompt lines. Default: prompt",
+      "sensitive": false
+    },
+    "response_label": {
+      "description": "Label prefixing response lines. Default: response",
+      "sensitive": false
+    },
+    "idle_label": {
+      "description": "Label for the 'time since last response' delta. Default: idle",
+      "sensitive": false
+    },
+    "took_label": {
+      "description": "Label for the response-duration delta. Default: took",
+      "sensitive": false
+    },
+    "session_label": {
+      "description": "Label for the session-elapsed suffix (only shown when show_session is on). Default: session",
+      "sensitive": false
+    },
+    "subagent_label": {
+      "description": "Label for subagent timing lines. Default: subagent",
+      "sensitive": false
+    },
+    "recap_label": {
+      "description": "Prefix for the session-recap line emitted on session end. Default: 'session recap:'",
+      "sensitive": false
+    },
+    "show_deltas": {
+      "description": "Show per-event delta (idle/took) on prompt and response lines. 1 to show, 0 to hide. Default: 1",
+      "sensitive": false
+    },
+    "show_session": {
+      "description": "Append session-elapsed time to every prompt and response line. 1 to show, 0 to hide. Default: 0",
+      "sensitive": false
+    },
+    "show_turn": {
+      "description": "Prefix prompt and response lines with a per-session turn counter (#1, #2, ...). 1 to show, 0 to hide. Default: 0",
+      "sensitive": false
+    },
+    "log_history": {
+      "description": "Append every event as a JSON line to a monthly history log in the plugin data dir. 1 to enable, 0 to disable. Default: 0",
+      "sensitive": false
+    },
+    "recap_min_turns": {
+      "description": "Only emit the session recap when the session had at least this many turns. Default: 3",
+      "sensitive": false
+    },
+    "log_months": {
+      "description": "Delete history-YYYY-MM.jsonl files older than this many months. 0 disables pruning. Default: 12",
+      "sensitive": false
+    },
+    "sanity_cap": {
+      "description": "Suppress any delta larger than this many seconds (guards against stale state from crashed sessions). Default: 86400 (24h)",
+      "sensitive": false
+    },
+    "cleanup_days": {
+      "description": "Delete per-session state files older than this many days. 0 disables cleanup. Default: 30",
+      "sensitive": false
+    }
+  }
 }

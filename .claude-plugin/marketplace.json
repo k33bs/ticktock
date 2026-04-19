@@ -9,7 +9,7 @@
       "name": "ticktock",
       "source": "./ticktock",
       "description": "Inline timestamps and per-turn deltas for Claude Code transcripts",
-      "version": "0.1.0"
+      "version": "0.2.0"
     }
   ]
 }

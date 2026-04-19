@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/timestamps.sh prompt"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/timestamps.sh\" prompt"
           }
         ]
       }
@@ -15,7 +15,37 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/timestamps.sh response"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/timestamps.sh\" response"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/timestamps.sh\" subagent_start"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/timestamps.sh\" subagent_stop"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/timestamps.sh\" session_end"
           }
         ]
       }
