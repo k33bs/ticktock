@@ -4,66 +4,98 @@
   "description": "Inline timestamps and per-turn deltas for Claude Code transcripts. Shows wall-clock time on every prompt and response, idle duration between events, response durations, subagent timing, and an optional session recap.",
   "userConfig": {
     "time_format": {
+      "type": "string",
+      "title": "Time format",
       "description": "strftime format for the wall-clock timestamp on each line. Examples: %H:%M:%S (default), %Y-%m-%d %H:%M:%S, %l:%M %p.",
       "sensitive": false
     },
     "prompt_label": {
+      "type": "string",
+      "title": "Prompt label",
       "description": "Label prefixing prompt lines. Default: prompt",
       "sensitive": false
     },
     "response_label": {
+      "type": "string",
+      "title": "Response label",
       "description": "Label prefixing response lines. Default: response",
       "sensitive": false
     },
     "idle_label": {
+      "type": "string",
+      "title": "Idle label",
       "description": "Label for the 'time since last response' delta. Default: idle",
       "sensitive": false
     },
     "took_label": {
+      "type": "string",
+      "title": "Took label",
       "description": "Label for the response-duration delta. Default: took",
       "sensitive": false
     },
     "session_label": {
-      "description": "Label for the session-elapsed suffix (only shown when show_session is on). Default: session",
+      "type": "string",
+      "title": "Session label",
+      "description": "Label for the session-elapsed suffix (only shown when Show session elapsed is on). Default: session",
       "sensitive": false
     },
     "subagent_label": {
+      "type": "string",
+      "title": "Subagent label",
       "description": "Label for subagent timing lines. Default: subagent",
       "sensitive": false
     },
     "recap_label": {
+      "type": "string",
+      "title": "Recap label",
       "description": "Prefix for the session-recap line emitted on session end. Default: 'session recap:'",
       "sensitive": false
     },
     "show_deltas": {
-      "description": "Show per-event delta (idle/took) on prompt and response lines. 1 to show, 0 to hide. Default: 1",
+      "type": "boolean",
+      "title": "Show deltas",
+      "description": "Show per-event delta (idle/took) on prompt and response lines. Default: on",
       "sensitive": false
     },
     "show_session": {
-      "description": "Append session-elapsed time to every prompt and response line. 1 to show, 0 to hide. Default: 0",
+      "type": "boolean",
+      "title": "Show session elapsed",
+      "description": "Append session-elapsed time to every prompt and response line. Default: off",
       "sensitive": false
     },
     "show_turn": {
-      "description": "Prefix prompt and response lines with a per-session turn counter (#1, #2, ...). 1 to show, 0 to hide. Default: 0",
+      "type": "boolean",
+      "title": "Show turn counter",
+      "description": "Prefix prompt and response lines with a per-session turn counter (#1, #2, ...). Default: off",
       "sensitive": false
     },
     "log_history": {
-      "description": "Append every event as a JSON line to a monthly history log in the plugin data dir. 1 to enable, 0 to disable. Default: 0",
+      "type": "boolean",
+      "title": "Log event history",
+      "description": "Append every event as a JSON line to a monthly history log in the plugin data dir. Default: off",
       "sensitive": false
     },
     "recap_min_turns": {
+      "type": "number",
+      "title": "Recap threshold (turns)",
       "description": "Only emit the session recap when the session had at least this many turns. Default: 3",
       "sensitive": false
     },
     "log_months": {
+      "type": "number",
+      "title": "History retention (months)",
       "description": "Delete history-YYYY-MM.jsonl files older than this many months. 0 disables pruning. Default: 12",
       "sensitive": false
     },
     "sanity_cap": {
+      "type": "number",
+      "title": "Sanity cap (seconds)",
       "description": "Suppress any delta larger than this many seconds (guards against stale state from crashed sessions). Default: 86400 (24h)",
       "sensitive": false
     },
     "cleanup_days": {
+      "type": "number",
+      "title": "State cleanup (days)",
       "description": "Delete per-session state files older than this many days. 0 disables cleanup. Default: 30",
       "sensitive": false
     }
