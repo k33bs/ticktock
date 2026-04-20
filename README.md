@@ -18,6 +18,11 @@ This repo is a Claude Code marketplace containing a single plugin (also named `t
 
 Then open `/hooks` (or restart Claude Code) to register the new hook events.
 
+> **Note on the `/plugin` configure screen.**
+> When Claude Code prompts you through ticktock's 16 configuration fields, every box appears **blank** — even though the plugin ships sensible defaults. The `/plugin` UI doesn't read the manifest's `default` values yet; this is tracked as [anthropics/claude-code#46477](https://github.com/anthropics/claude-code/issues/46477).
+>
+> Press Enter through every blank prompt — ticktock's built-in defaults apply to anything you leave empty. To customize, use the `CLAUDE_TICKTOCK_*` env vars (see the [plugin README](ticktock/README.md#configuration)).
+
 See [`ticktock/README.md`](ticktock/README.md) for full documentation and configuration.
 
 ## Development

@@ -24,7 +24,12 @@ Every prompt and response gets a small timestamp line. You see how long Claude i
 /plugin install ticktock@ticktock
 ```
 
-Open `/hooks` (or restart Claude Code) once to register the hook events. On first enable Claude Code may prompt you for any of the 16 configuration options — leave anything blank to keep the defaults.
+Open `/hooks` (or restart Claude Code) once to register the hook events. That's it — the useful features are on by default.
+
+> **Heads up on the `/plugin` configure screen.**
+> When you enable ticktock, Claude Code opens a multi-field configuration UI. Every field is currently shown **blank** — even though ticktock declares sensible `default` values in its manifest, the `/plugin` UI doesn't pre-fill from them yet. This is tracked upstream as [anthropics/claude-code#46477](https://github.com/anthropics/claude-code/issues/46477).
+>
+> **What to do:** press Enter / Tab through every blank field. ticktock's built-in defaults apply to anything left empty, so you end up with the intended behavior anyway. If you want to customize, use the `CLAUDE_TICKTOCK_*` env vars (see [Configuration](#configuration)) — they take precedence over the plugin menu.
 
 ---
 
@@ -50,9 +55,9 @@ The `idle` delta is hidden on the first prompt of a session (no prior response t
 
 ---
 
-## Optional features
+## Features
 
-### Session elapsed
+### Session elapsed *(on by default)*
 
 Appends running session time to every prompt and response line (not to subagent or recap lines — those stay compact).
 
@@ -61,9 +66,9 @@ prompt 14:05:00  idle 3m12s  session 12m
 response 14:05:30  took 30s  session 12m30s
 ```
 
-Enable via plugin menu (`show_session = 1`) or `CLAUDE_TS_SHOW_SESSION=1`.
+Disable via `CLAUDE_TICKTOCK_SHOW_SESSION=0` (or `show_session = 0` in the plugin menu).
 
-### Turn counter
+### Turn counter *(on by default)*
 
 Prefixes prompt and response lines with a per-session turn number. Useful for long sessions where "which prompt was that?" matters.
 
@@ -72,7 +77,7 @@ prompt #5 14:05:00  idle 3m12s
 response #5 14:05:30  took 30s
 ```
 
-Enable via plugin menu (`show_turn = 1`) or `CLAUDE_TS_SHOW_TURN=1`.
+Disable via `CLAUDE_TICKTOCK_SHOW_TURN=0` (or `show_turn = 0` in the plugin menu).
 
 ### Subagent timing
 
@@ -93,9 +98,9 @@ One summary line at session end (triggered by `/clear`, `/compact`, quit, or any
 session recap: 1h23m · 17 turns · avg response 11s · longest 2m15s
 ```
 
-### History log (JSON lines)
+### History log (JSON lines) *(opt-in)*
 
-Persistent, structured log of every event for external analysis. Machine-readable JSON, one event per line.
+Persistent, structured log of every event for external analysis. Machine-readable JSON, one event per line. **Off by default** — enable when you want it.
 
 File: `${CLAUDE_PLUGIN_DATA}/history-YYYY-MM.jsonl` — monthly rotation, files older than `log_months` are pruned on each run (default 12 months; set to 0 to keep forever).
 
@@ -124,13 +129,13 @@ Kind-specific fields:
 | `subagent`    | `turn` (int), `name` (string), `took_s` (int) — logged on `SubagentStop`, one line per run     |
 | `session_end` | `turns` (int), `elapsed_s` (int), `total_response_s` (int), `longest_response_s` (int)         |
 
-Enable via plugin menu (`log_history = 1`) or `CLAUDE_TS_LOG_HISTORY=1`. The log dir is cleaned up when you uninstall ticktock — the `/plugin` UI asks first, the `claude plugin uninstall` CLI deletes by default (pass `--keep-data` to preserve).
+Enable via plugin menu (`log_history = 1`) or `CLAUDE_TICKTOCK_LOG_HISTORY=1`. The log dir is cleaned up when you uninstall ticktock — the `/plugin` UI asks first, the `claude plugin uninstall` CLI deletes by default (pass `--keep-data` to preserve).
 
 ---
 
 ## Configuration
 
-Two layers. The plugin menu covers every non-path option; `CLAUDE_TS_*` environment variables override anything in the menu for per-shell tweaks.
+Two layers. The plugin menu covers every non-path option; `CLAUDE_TICKTOCK_*` environment variables override anything in the menu for per-shell tweaks.
 
 ### Via plugin menu
 
@@ -147,8 +152,8 @@ When you enable or reconfigure ticktock, Claude Code prompts for each of these. 
 | `subagent_label`   | `subagent`       | any string      | Label on subagent lines                              |
 | `recap_label`      | `session recap:` | any string      | Prefix on the recap line                             |
 | `show_deltas`      | `1`              | `0` / `1`       | Show idle/took delta on prompt and response lines    |
-| `show_session`     | `0`              | `0` / `1`       | Append `session Xm` to prompt and response lines     |
-| `show_turn`        | `0`              | `0` / `1`       | Prefix lines with turn counter (`#1`, `#2`, …)       |
+| `show_session`     | `1`              | `0` / `1`       | Append `session Xm` to prompt and response lines     |
+| `show_turn`        | `1`              | `0` / `1`       | Prefix lines with turn counter (`#1`, `#2`, …)       |
 | `log_history`      | `0`              | `0` / `1`       | Write events to `history-YYYY-MM.jsonl`              |
 | `recap_min_turns`  | `3`              | integer         | Only emit recap when session has ≥ N turns           |
 | `log_months`       | `12`             | integer         | Prune history files older than N months (0 = never)  |
@@ -159,34 +164,34 @@ Truthy values for the `show_*` and `log_history` toggles: `1`, `true`, `yes`, `o
 
 ### Via environment variables
 
-Everything above also has a matching `CLAUDE_TS_*` environment variable — useful for per-shell tweaks, or for setting `CLAUDE_TS_STATE_DIR` (the only option not exposed in the menu).
+Everything above also has a matching `CLAUDE_TICKTOCK_*` environment variable — useful for per-shell tweaks, or for setting `CLAUDE_TICKTOCK_STATE_DIR` (the only option not exposed in the menu).
 
 | Variable                     | Default                     |
 | ---------------------------- | --------------------------- |
-| `CLAUDE_TS_STATE_DIR`        | `$HOME/.claude/timestamps`  |
-| `CLAUDE_TS_TIME_FORMAT`      | `%H:%M:%S`                  |
-| `CLAUDE_TS_PROMPT_LABEL`     | `prompt`                    |
-| `CLAUDE_TS_RESPONSE_LABEL`   | `response`                  |
-| `CLAUDE_TS_IDLE_LABEL`       | `idle`                      |
-| `CLAUDE_TS_TOOK_LABEL`       | `took`                      |
-| `CLAUDE_TS_SESSION_LABEL`    | `session`                   |
-| `CLAUDE_TS_SUBAGENT_LABEL`   | `subagent`                  |
-| `CLAUDE_TS_RECAP_LABEL`      | `session recap:`            |
-| `CLAUDE_TS_SHOW_DELTAS`      | `1`                         |
-| `CLAUDE_TS_SHOW_SESSION`     | `0`                         |
-| `CLAUDE_TS_SHOW_TURN`        | `0`                         |
-| `CLAUDE_TS_LOG_HISTORY`      | `0`                         |
-| `CLAUDE_TS_RECAP_MIN_TURNS`  | `3`                         |
-| `CLAUDE_TS_LOG_MONTHS`       | `12`                        |
-| `CLAUDE_TS_SANITY_CAP`       | `86400`                     |
-| `CLAUDE_TS_CLEANUP_DAYS`     | `30`                        |
+| `CLAUDE_TICKTOCK_STATE_DIR`        | `$HOME/.claude/timestamps`  |
+| `CLAUDE_TICKTOCK_TIME_FORMAT`      | `%H:%M:%S`                  |
+| `CLAUDE_TICKTOCK_PROMPT_LABEL`     | `prompt`                    |
+| `CLAUDE_TICKTOCK_RESPONSE_LABEL`   | `response`                  |
+| `CLAUDE_TICKTOCK_IDLE_LABEL`       | `idle`                      |
+| `CLAUDE_TICKTOCK_TOOK_LABEL`       | `took`                      |
+| `CLAUDE_TICKTOCK_SESSION_LABEL`    | `session`                   |
+| `CLAUDE_TICKTOCK_SUBAGENT_LABEL`   | `subagent`                  |
+| `CLAUDE_TICKTOCK_RECAP_LABEL`      | `session recap:`            |
+| `CLAUDE_TICKTOCK_SHOW_DELTAS`      | `1`                         |
+| `CLAUDE_TICKTOCK_SHOW_SESSION`     | `1`                         |
+| `CLAUDE_TICKTOCK_SHOW_TURN`        | `1`                         |
+| `CLAUDE_TICKTOCK_LOG_HISTORY`      | `0`                         |
+| `CLAUDE_TICKTOCK_RECAP_MIN_TURNS`  | `3`                         |
+| `CLAUDE_TICKTOCK_LOG_MONTHS`       | `12`                        |
+| `CLAUDE_TICKTOCK_SANITY_CAP`       | `86400`                     |
+| `CLAUDE_TICKTOCK_CLEANUP_DAYS`     | `30`                        |
 
 Set them in your shell rc, or in the `env` block of Claude Code's `settings.json`.
 
 ### Precedence
 
 Settings resolve in this order (highest wins):
-1. `CLAUDE_TS_*` environment variable
+1. `CLAUDE_TICKTOCK_*` environment variable
 2. `CLAUDE_PLUGIN_OPTION_*` (set via `/plugin` UI, per the `userConfig` section in `plugin.json`)
 3. Built-in default
 
@@ -198,9 +203,9 @@ Set in Claude Code's `settings.json`:
 ```json
 {
   "env": {
-    "CLAUDE_TS_PROMPT_LABEL": "YOU",
-    "CLAUDE_TS_RESPONSE_LABEL": "CLAUDE",
-    "CLAUDE_TS_SHOW_SESSION": "1"
+    "CLAUDE_TICKTOCK_PROMPT_LABEL": "YOU",
+    "CLAUDE_TICKTOCK_RESPONSE_LABEL": "CLAUDE",
+    "CLAUDE_TICKTOCK_SHOW_SESSION": "1"
   }
 }
 ```

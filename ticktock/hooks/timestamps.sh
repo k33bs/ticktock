@@ -12,7 +12,7 @@
 # Stdin: Claude Code hook JSON (session_id, agent_id, etc.).
 #
 # Configuration resolves in this order (highest wins):
-#   1. CLAUDE_TS_<NAME> environment variable (per-shell override)
+#   1. CLAUDE_TICKTOCK_<NAME> environment variable (per-shell override)
 #   2. CLAUDE_PLUGIN_OPTION_<NAME> (set via /plugin UI, declared in plugin.json)
 #   3. Built-in default (below)
 #
@@ -22,22 +22,22 @@ set -u
 
 # ─── config: env > plugin option > default ────────────────────────────────────
 
-readonly STATE_DIR="${CLAUDE_TS_STATE_DIR:-${CLAUDE_PLUGIN_OPTION_STATE_DIR:-$HOME/.claude/timestamps}}"
-readonly TIME_FORMAT="${CLAUDE_TS_TIME_FORMAT:-${CLAUDE_PLUGIN_OPTION_TIME_FORMAT:-%H:%M:%S}}"
-readonly PROMPT_LABEL="${CLAUDE_TS_PROMPT_LABEL:-${CLAUDE_PLUGIN_OPTION_PROMPT_LABEL:-prompt}}"
-readonly RESPONSE_LABEL="${CLAUDE_TS_RESPONSE_LABEL:-${CLAUDE_PLUGIN_OPTION_RESPONSE_LABEL:-response}}"
-readonly IDLE_LABEL="${CLAUDE_TS_IDLE_LABEL:-${CLAUDE_PLUGIN_OPTION_IDLE_LABEL:-idle}}"
-readonly TOOK_LABEL="${CLAUDE_TS_TOOK_LABEL:-${CLAUDE_PLUGIN_OPTION_TOOK_LABEL:-took}}"
-readonly SESSION_LABEL="${CLAUDE_TS_SESSION_LABEL:-${CLAUDE_PLUGIN_OPTION_SESSION_LABEL:-session}}"
-readonly SUBAGENT_LABEL="${CLAUDE_TS_SUBAGENT_LABEL:-${CLAUDE_PLUGIN_OPTION_SUBAGENT_LABEL:-subagent}}"
-readonly RECAP_LABEL="${CLAUDE_TS_RECAP_LABEL:-${CLAUDE_PLUGIN_OPTION_RECAP_LABEL:-session recap:}}"
+readonly STATE_DIR="${CLAUDE_TICKTOCK_STATE_DIR:-${CLAUDE_PLUGIN_OPTION_STATE_DIR:-$HOME/.claude/timestamps}}"
+readonly TIME_FORMAT="${CLAUDE_TICKTOCK_TIME_FORMAT:-${CLAUDE_PLUGIN_OPTION_TIME_FORMAT:-%H:%M:%S}}"
+readonly PROMPT_LABEL="${CLAUDE_TICKTOCK_PROMPT_LABEL:-${CLAUDE_PLUGIN_OPTION_PROMPT_LABEL:-prompt}}"
+readonly RESPONSE_LABEL="${CLAUDE_TICKTOCK_RESPONSE_LABEL:-${CLAUDE_PLUGIN_OPTION_RESPONSE_LABEL:-response}}"
+readonly IDLE_LABEL="${CLAUDE_TICKTOCK_IDLE_LABEL:-${CLAUDE_PLUGIN_OPTION_IDLE_LABEL:-idle}}"
+readonly TOOK_LABEL="${CLAUDE_TICKTOCK_TOOK_LABEL:-${CLAUDE_PLUGIN_OPTION_TOOK_LABEL:-took}}"
+readonly SESSION_LABEL="${CLAUDE_TICKTOCK_SESSION_LABEL:-${CLAUDE_PLUGIN_OPTION_SESSION_LABEL:-session}}"
+readonly SUBAGENT_LABEL="${CLAUDE_TICKTOCK_SUBAGENT_LABEL:-${CLAUDE_PLUGIN_OPTION_SUBAGENT_LABEL:-subagent}}"
+readonly RECAP_LABEL="${CLAUDE_TICKTOCK_RECAP_LABEL:-${CLAUDE_PLUGIN_OPTION_RECAP_LABEL:-session recap:}}"
 
 is_on() { [[ $1 == "1" || $1 == "true" || $1 == "yes" || $1 == "on" ]]; }
 
-_raw_show_deltas="${CLAUDE_TS_SHOW_DELTAS:-${CLAUDE_PLUGIN_OPTION_SHOW_DELTAS:-1}}"
-_raw_show_session="${CLAUDE_TS_SHOW_SESSION:-${CLAUDE_PLUGIN_OPTION_SHOW_SESSION:-0}}"
-_raw_show_turn="${CLAUDE_TS_SHOW_TURN:-${CLAUDE_PLUGIN_OPTION_SHOW_TURN:-0}}"
-_raw_log_history="${CLAUDE_TS_LOG_HISTORY:-${CLAUDE_PLUGIN_OPTION_LOG_HISTORY:-0}}"
+_raw_show_deltas="${CLAUDE_TICKTOCK_SHOW_DELTAS:-${CLAUDE_PLUGIN_OPTION_SHOW_DELTAS:-1}}"
+_raw_show_session="${CLAUDE_TICKTOCK_SHOW_SESSION:-${CLAUDE_PLUGIN_OPTION_SHOW_SESSION:-1}}"
+_raw_show_turn="${CLAUDE_TICKTOCK_SHOW_TURN:-${CLAUDE_PLUGIN_OPTION_SHOW_TURN:-1}}"
+_raw_log_history="${CLAUDE_TICKTOCK_LOG_HISTORY:-${CLAUDE_PLUGIN_OPTION_LOG_HISTORY:-0}}"
 
 SHOW_DELTAS=0;  is_on "$_raw_show_deltas"  && SHOW_DELTAS=1;  readonly SHOW_DELTAS
 SHOW_SESSION=0; is_on "$_raw_show_session" && SHOW_SESSION=1; readonly SHOW_SESSION
@@ -51,10 +51,10 @@ _num() {  # $1=raw $2=default ; echoes sanitized value
   printf '%s' "$((10#$v))"
 }
 
-readonly SANITY_CAP=$(_num  "${CLAUDE_TS_SANITY_CAP:-${CLAUDE_PLUGIN_OPTION_SANITY_CAP:-86400}}"          86400)
-readonly CLEANUP_DAYS=$(_num "${CLAUDE_TS_CLEANUP_DAYS:-${CLAUDE_PLUGIN_OPTION_CLEANUP_DAYS:-30}}"         30)
-readonly RECAP_MIN_TURNS=$(_num "${CLAUDE_TS_RECAP_MIN_TURNS:-${CLAUDE_PLUGIN_OPTION_RECAP_MIN_TURNS:-3}}" 3)
-readonly LOG_MONTHS=$(_num "${CLAUDE_TS_LOG_MONTHS:-${CLAUDE_PLUGIN_OPTION_LOG_MONTHS:-12}}"               12)
+readonly SANITY_CAP=$(_num  "${CLAUDE_TICKTOCK_SANITY_CAP:-${CLAUDE_PLUGIN_OPTION_SANITY_CAP:-86400}}"          86400)
+readonly CLEANUP_DAYS=$(_num "${CLAUDE_TICKTOCK_CLEANUP_DAYS:-${CLAUDE_PLUGIN_OPTION_CLEANUP_DAYS:-30}}"         30)
+readonly RECAP_MIN_TURNS=$(_num "${CLAUDE_TICKTOCK_RECAP_MIN_TURNS:-${CLAUDE_PLUGIN_OPTION_RECAP_MIN_TURNS:-3}}" 3)
+readonly LOG_MONTHS=$(_num "${CLAUDE_TICKTOCK_LOG_MONTHS:-${CLAUDE_PLUGIN_OPTION_LOG_MONTHS:-12}}"               12)
 
 # History log lives in CLAUDE_PLUGIN_DATA when running as a plugin (survives updates),
 # or falls back to STATE_DIR when running as a standalone script.

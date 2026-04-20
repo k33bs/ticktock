@@ -2,6 +2,14 @@
   "name": "ticktock",
   "version": "0.2.0",
   "description": "Inline timestamps and per-turn deltas for Claude Code transcripts. Shows wall-clock time on every prompt and response, idle duration between events, response durations, subagent timing, and an optional session recap.",
+  "author": {
+    "name": "k33bs",
+    "url": "https://absolutely.works"
+  },
+  "homepage": "https://github.com/k33bs/ticktock",
+  "repository": "https://github.com/k33bs/ticktock",
+  "license": "MIT",
+  "keywords": ["timestamps", "hooks", "observability", "telemetry"],
   "userConfig": {
     "time_format": {
       "type": "string",
@@ -70,14 +78,14 @@
       "type": "boolean",
       "title": "Show session elapsed",
       "description": "Append session-elapsed time to every prompt and response line.",
-      "default": false,
+      "default": true,
       "sensitive": false
     },
     "show_turn": {
       "type": "boolean",
       "title": "Show turn counter",
       "description": "Prefix prompt and response lines with a per-session turn counter (#1, #2, ...).",
-      "default": false,
+      "default": true,
       "sensitive": false
     },
     "log_history": {

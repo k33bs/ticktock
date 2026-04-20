@@ -34,7 +34,7 @@ run_script() {
   local kind=$1 sid=$2
   shift 2
   echo "{\"session_id\":\"$sid\"}" | \
-    env CLAUDE_TS_STATE_DIR="$TEST_STATE" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$@" "$SCRIPT" "$kind"
+    env CLAUDE_TICKTOCK_STATE_DIR="$TEST_STATE" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$@" "$SCRIPT" "$kind"
 }
 
 # Run with an explicit stdin JSON payload.
@@ -42,7 +42,7 @@ run_script_stdin() {
   local kind=$1 payload=$2
   shift 2
   printf '%s' "$payload" | \
-    env CLAUDE_TS_STATE_DIR="$TEST_STATE" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$@" "$SCRIPT" "$kind"
+    env CLAUDE_TICKTOCK_STATE_DIR="$TEST_STATE" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$@" "$SCRIPT" "$kind"
 }
 
 section() { printf '\n\033[1m== %s ==\033[0m\n' "$1"; }
@@ -105,13 +105,16 @@ echo "$out1" | jq -e .systemMessage >/dev/null 2>&1 \
   && ok "prompt emits {systemMessage}" \
   || bad "prompt emits {systemMessage}" "$out1"
 
-[[ "$out1" =~ ^\{\"systemMessage\":\"prompt\ [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\"\}$ ]] \
-  && ok "first prompt has no delta" \
-  || bad "first prompt has no delta" "$out1"
+# bare prompt with defaults-off should just be the timestamp
+SID_BARE="bare-$$"
+out_bare=$(run_script prompt "$SID_BARE" CLAUDE_TICKTOCK_SHOW_TURN=0 CLAUDE_TICKTOCK_SHOW_SESSION=0)
+[[ "$out_bare" =~ ^\{\"systemMessage\":\"prompt\ [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\"\}$ ]] \
+  && ok "bare prompt (turn/session off) has no delta or extras" \
+  || bad "bare prompt (turn/session off) has no delta or extras" "$out_bare"
 
 sleep 1
 out2=$(run_script response "$SID")
-[[ "$out2" == *'took 1s'* ]] \
+[[ "$out2" =~ took\ [0-9]+s ]] \
   && ok "first response shows 'took Xs'" \
   || bad "first response shows 'took Xs'" "$out2"
 
@@ -121,60 +124,83 @@ out3=$(run_script prompt "$SID")
   && ok "second prompt shows 'idle Xs'" \
   || bad "second prompt shows 'idle Xs'" "$out3"
 
+# ─── defaults: session + turn are on out of the box ───────────────────────────
+
+section "defaults on"
+
+SID="defaults-$$"
+out=$(run_script prompt "$SID")
+[[ "$out" == *'#1 '* ]] \
+  && ok "show_turn is on by default (#1 prefix)" \
+  || bad "show_turn is on by default (#1 prefix)" "$out"
+[[ "$out" == *'session '* ]] \
+  && ok "show_session is on by default (session suffix)" \
+  || bad "show_session is on by default (session suffix)" "$out"
+
+# env override can disable both
+SID="disable-$$"
+out=$(run_script prompt "$SID" CLAUDE_TICKTOCK_SHOW_TURN=0 CLAUDE_TICKTOCK_SHOW_SESSION=0)
+[[ "$out" != *'#1'* ]] \
+  && ok "CLAUDE_TICKTOCK_SHOW_TURN=0 hides turn counter" \
+  || bad "CLAUDE_TICKTOCK_SHOW_TURN=0 hides turn counter" "$out"
+[[ "$out" != *'session '* ]] \
+  && ok "CLAUDE_TICKTOCK_SHOW_SESSION=0 hides session suffix" \
+  || bad "CLAUDE_TICKTOCK_SHOW_SESSION=0 hides session suffix" "$out"
+
 # ─── turn counter ─────────────────────────────────────────────────────────────
 
 section "turn counter"
 
 SID="turn-$$"
-out1=$(run_script prompt "$SID" CLAUDE_TS_SHOW_TURN=1)
+out1=$(run_script prompt "$SID" CLAUDE_TICKTOCK_SHOW_TURN=1)
 [[ "$out1" == *'#1 prompt'* ]] \
   && ok "turn counter starts at #1" \
   || bad "turn counter starts at #1" "$out1"
 
-out1r=$(run_script response "$SID" CLAUDE_TS_SHOW_TURN=1)
+out1r=$(run_script response "$SID" CLAUDE_TICKTOCK_SHOW_TURN=1)
 [[ "$out1r" == *'#1 response'* ]] \
   && ok "response reuses current turn number" \
   || bad "response reuses current turn number" "$out1r"
 
-out2=$(run_script prompt "$SID" CLAUDE_TS_SHOW_TURN=1)
+out2=$(run_script prompt "$SID" CLAUDE_TICKTOCK_SHOW_TURN=1)
 [[ "$out2" == *'#2 prompt'* ]] \
   && ok "turn counter increments on next prompt" \
   || bad "turn counter increments on next prompt" "$out2"
 
-# turn counter hidden by default
+# turn counter hidden when explicitly disabled
 SID="turn-off-$$"
-out=$(run_script prompt "$SID")
+out=$(run_script prompt "$SID" CLAUDE_TICKTOCK_SHOW_TURN=0)
 [[ "$out" != *'#1'* && "$out" != *'#2'* ]] \
-  && ok "turn counter hidden when SHOW_TURN=0" \
-  || bad "turn counter hidden when SHOW_TURN=0" "$out"
+  && ok "CLAUDE_TICKTOCK_SHOW_TURN=0 suppresses the counter" \
+  || bad "CLAUDE_TICKTOCK_SHOW_TURN=0 suppresses the counter" "$out"
 
-# ─── config precedence: CLAUDE_TS > CLAUDE_PLUGIN_OPTION > default ────────────
+# ─── config precedence: CLAUDE_TICKTOCK > CLAUDE_PLUGIN_OPTION > default ─────
 
 section "config precedence"
 
 SID="prec-$$"
-# Plugin option alone enables feature.
-out=$(run_script prompt "$SID" CLAUDE_PLUGIN_OPTION_SHOW_TURN=1)
-[[ "$out" == *'#1 prompt'* ]] \
+# Plugin option alone disables feature (default is on, plugin sets to 0 → off).
+out=$(run_script prompt "$SID" CLAUDE_PLUGIN_OPTION_SHOW_TURN=0)
+[[ "$out" != *'#1 '* ]] \
   && ok "CLAUDE_PLUGIN_OPTION_* is read by the script" \
   || bad "CLAUDE_PLUGIN_OPTION_* is read by the script" "$out"
 
 SID="prec2-$$"
-# Env var wins over plugin option.
-out=$(run_script prompt "$SID" CLAUDE_TS_SHOW_TURN=0 CLAUDE_PLUGIN_OPTION_SHOW_TURN=1)
-[[ "$out" != *'#1'* ]] \
-  && ok "CLAUDE_TS_* overrides CLAUDE_PLUGIN_OPTION_*" \
-  || bad "CLAUDE_TS_* overrides CLAUDE_PLUGIN_OPTION_*" "$out"
+# CLAUDE_TICKTOCK_* wins over CLAUDE_PLUGIN_OPTION_*: plugin option off, env on → on.
+out=$(run_script prompt "$SID" CLAUDE_TICKTOCK_SHOW_TURN=1 CLAUDE_PLUGIN_OPTION_SHOW_TURN=0)
+[[ "$out" == *'#1 '* ]] \
+  && ok "CLAUDE_TICKTOCK_* overrides CLAUDE_PLUGIN_OPTION_*" \
+  || bad "CLAUDE_TICKTOCK_* overrides CLAUDE_PLUGIN_OPTION_*" "$out"
 
 # Truthy aliases
 SID="truthy-$$"
-out=$(run_script prompt "$SID" CLAUDE_TS_SHOW_TURN=true)
+out=$(run_script prompt "$SID" CLAUDE_TICKTOCK_SHOW_TURN=true)
 [[ "$out" == *'#1 prompt'* ]] \
   && ok "'true' is truthy for toggles" \
   || bad "'true' is truthy for toggles" "$out"
 
 SID="truthy2-$$"
-out=$(run_script prompt "$SID" CLAUDE_TS_SHOW_TURN=yes)
+out=$(run_script prompt "$SID" CLAUDE_TICKTOCK_SHOW_TURN=yes)
 [[ "$out" == *'#1 prompt'* ]] \
   && ok "'yes' is truthy for toggles" \
   || bad "'yes' is truthy for toggles" "$out"
@@ -184,7 +210,7 @@ out=$(run_script prompt "$SID" CLAUDE_TS_SHOW_TURN=yes)
 section "session elapsed"
 
 SID="sess-$$"
-out=$(run_script prompt "$SID" CLAUDE_TS_SHOW_SESSION=1)
+out=$(run_script prompt "$SID" CLAUDE_TICKTOCK_SHOW_SESSION=1)
 [[ "$out" == *'session '* ]] \
   && ok "SHOW_SESSION=1 adds 'session Xs'" \
   || bad "SHOW_SESSION=1 adds 'session Xs'" "$out"
@@ -204,7 +230,8 @@ out_start=$(run_script_stdin subagent_start "$PAYLOAD_START")
 
 sleep 1
 out_stop=$(run_script_stdin subagent_stop "$PAYLOAD_STOP")
-[[ "$out_stop" == *'subagent Explore  took 1s'* ]] \
+# tolerate 1s or 2s depending on second-boundary rounding of date +%s
+[[ "$out_stop" =~ subagent\ Explore\ \ took\ [0-9]+s ]] \
   && ok "subagent_stop emits 'subagent NAME  took Xs'" \
   || bad "subagent_stop emits 'subagent NAME  took Xs'" "$out_stop"
 
@@ -227,10 +254,10 @@ sleep 1
 # Stop B first, then A
 out_b=$(run_script_stdin subagent_stop "$PB_START")
 out_a=$(run_script_stdin subagent_stop "$PA_START")
-[[ "$out_b" == *'AgentTwo  took 1s'* ]] \
+[[ "$out_b" =~ AgentTwo\ \ took\ [0-9]+s ]] \
   && ok "parallel subagent: second started finishes correctly" \
   || bad "parallel subagent: second started finishes correctly" "$out_b"
-[[ "$out_a" == *'AgentOne  took'* ]] \
+[[ "$out_a" =~ AgentOne\ \ took\ [0-9]+s ]] \
   && ok "parallel subagent: first still resolves after second stops" \
   || bad "parallel subagent: first still resolves after second stops" "$out_a"
 
@@ -265,9 +292,9 @@ out=$(run_script session_end "$SID")
 
 # Custom threshold
 SID="recap-custom-$$"
-run_script prompt "$SID" CLAUDE_TS_RECAP_MIN_TURNS=1 >/dev/null
-run_script response "$SID" CLAUDE_TS_RECAP_MIN_TURNS=1 >/dev/null
-out=$(run_script session_end "$SID" CLAUDE_TS_RECAP_MIN_TURNS=1)
+run_script prompt "$SID" CLAUDE_TICKTOCK_RECAP_MIN_TURNS=1 >/dev/null
+run_script response "$SID" CLAUDE_TICKTOCK_RECAP_MIN_TURNS=1 >/dev/null
+out=$(run_script session_end "$SID" CLAUDE_TICKTOCK_RECAP_MIN_TURNS=1)
 [[ "$out" == *'session recap:'* ]] \
   && ok "RECAP_MIN_TURNS=1 lowers threshold" \
   || bad "RECAP_MIN_TURNS=1 lowers threshold" "$out"
@@ -291,9 +318,9 @@ LOG_MONTH=$(date -u +%Y-%m)
 LOG_FILE="$TEST_DATA/history-$LOG_MONTH.jsonl"
 rm -f "$LOG_FILE"
 
-run_script prompt "$SID" CLAUDE_TS_LOG_HISTORY=1 >/dev/null
-run_script response "$SID" CLAUDE_TS_LOG_HISTORY=1 >/dev/null
-run_script session_end "$SID" CLAUDE_TS_LOG_HISTORY=1 >/dev/null
+run_script prompt "$SID" CLAUDE_TICKTOCK_LOG_HISTORY=1 >/dev/null
+run_script response "$SID" CLAUDE_TICKTOCK_LOG_HISTORY=1 >/dev/null
+run_script session_end "$SID" CLAUDE_TICKTOCK_LOG_HISTORY=1 >/dev/null
 
 [[ -f $LOG_FILE ]] \
   && ok "log file created at \$CLAUDE_PLUGIN_DATA/history-YYYY-MM.jsonl" \
@@ -380,7 +407,7 @@ out=$(run_script prompt "$SID")
 
 section "robustness: invalid stdin"
 
-out=$(echo "not json at all" | env CLAUDE_TS_STATE_DIR="$TEST_STATE" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$SCRIPT" prompt 2>&1)
+out=$(echo "not json at all" | env CLAUDE_TICKTOCK_STATE_DIR="$TEST_STATE" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$SCRIPT" prompt 2>&1)
 echo "$out" | jq -e .systemMessage >/dev/null 2>&1 \
   && ok "bogus stdin still emits (falls back to 'default' session)" \
   || bad "bogus stdin still emits" "$out"
@@ -393,7 +420,7 @@ RODIR="$TEST_ROOT/readonly"
 mkdir -p "$RODIR"; chmod 500 "$RODIR"
 SID="ro-$$"
 out=$(echo "{\"session_id\":\"$SID\"}" | \
-      env CLAUDE_TS_STATE_DIR="$RODIR" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$SCRIPT" prompt 2>&1)
+      env CLAUDE_TICKTOCK_STATE_DIR="$RODIR" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$SCRIPT" prompt 2>&1)
 chmod 700 "$RODIR"
 
 [[ "$out" == '{"systemMessage":'* ]] \
@@ -410,7 +437,7 @@ section "config: numeric validation"
 
 for bad_val in "foo" "08" "09" "007" "0100" ""; do
   SID="numval-${bad_val//[^a-zA-Z0-9]/_}-$$"
-  out=$(run_script prompt "$SID" CLAUDE_TS_CLEANUP_DAYS="$bad_val" CLAUDE_TS_SANITY_CAP="$bad_val")
+  out=$(run_script prompt "$SID" CLAUDE_TICKTOCK_CLEANUP_DAYS="$bad_val" CLAUDE_TICKTOCK_SANITY_CAP="$bad_val")
   if [[ "$out" == '{"systemMessage":'* && "$out" != *'bash:'* && "$out" != *'value too great'* && "$out" != *'syntax error'* ]]; then
     ok "bad value tolerated: '$bad_val'"
   else
@@ -424,7 +451,7 @@ section "security: injection"
 
 SID="inject-$$"
 rm -f /tmp/ticktock-pwn
-out=$(run_script prompt "$SID" CLAUDE_TS_CLEANUP_DAYS='malicious; touch /tmp/ticktock-pwn')
+out=$(run_script prompt "$SID" CLAUDE_TICKTOCK_CLEANUP_DAYS='malicious; touch /tmp/ticktock-pwn')
 [[ -f /tmp/ticktock-pwn ]] && { bad "injection attempt succeeded — /tmp/ticktock-pwn created"; rm -f /tmp/ticktock-pwn; } \
   || ok "injection attempt does not execute"
 [[ "$out" == '{"systemMessage":'* ]] \
@@ -434,7 +461,7 @@ out=$(run_script prompt "$SID" CLAUDE_TS_CLEANUP_DAYS='malicious; touch /tmp/tic
 # Test injection via session_id (fed into filenames)
 SID_EVIL="../../etc/passwd"
 out=$(echo "{\"session_id\":\"$SID_EVIL\"}" | \
-      env CLAUDE_TS_STATE_DIR="$TEST_STATE" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$SCRIPT" prompt 2>&1)
+      env CLAUDE_TICKTOCK_STATE_DIR="$TEST_STATE" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$SCRIPT" prompt 2>&1)
 [[ "$out" == '{"systemMessage":'* ]] \
   && ok "nasty session_id sanitized, script still emits" \
   || bad "nasty session_id sanitized, script still emits" "$out"
@@ -447,7 +474,7 @@ out=$(echo "{\"session_id\":\"$SID_EVIL\"}" | \
 
 section "arg validation"
 
-out=$(echo '{}' | env CLAUDE_TS_STATE_DIR="$TEST_STATE" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$SCRIPT" bogus 2>&1 ; echo "EXIT=$?")
+out=$(echo '{}' | env CLAUDE_TICKTOCK_STATE_DIR="$TEST_STATE" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$SCRIPT" bogus 2>&1 ; echo "EXIT=$?")
 [[ "$out" == *"usage:"*"EXIT=2" ]] \
   && ok "invalid arg exits 2 with usage" \
   || bad "invalid arg exits 2 with usage" "$out"
@@ -457,7 +484,7 @@ for k in prompt response subagent_start subagent_stop session_end; do
   # Just check exit status on a minimal run — use a unique SID so state doesn't leak.
   SID="validarg-$k-$$"
   payload="{\"session_id\":\"$SID\",\"agent_id\":\"a\",\"agent_type\":\"X\"}"
-  echo "$payload" | env CLAUDE_TS_STATE_DIR="$TEST_STATE" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$SCRIPT" "$k" >/dev/null 2>&1
+  echo "$payload" | env CLAUDE_TICKTOCK_STATE_DIR="$TEST_STATE" CLAUDE_PLUGIN_DATA="$TEST_DATA" "$SCRIPT" "$k" >/dev/null 2>&1
   rc=$?
   (( rc == 0 )) && ok "kind accepted: $k" || bad "kind accepted: $k" "rc=$rc"
 done
