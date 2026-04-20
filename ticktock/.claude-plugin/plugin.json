@@ -7,96 +7,112 @@
       "type": "string",
       "title": "Time format",
       "description": "strftime format for the wall-clock timestamp on each line. Examples: %H:%M:%S (default), %Y-%m-%d %H:%M:%S, %l:%M %p.",
+      "default": "%H:%M:%S",
       "sensitive": false
     },
     "prompt_label": {
       "type": "string",
       "title": "Prompt label",
-      "description": "Label prefixing prompt lines. Default: prompt",
+      "description": "Label prefixing prompt lines.",
+      "default": "prompt",
       "sensitive": false
     },
     "response_label": {
       "type": "string",
       "title": "Response label",
-      "description": "Label prefixing response lines. Default: response",
+      "description": "Label prefixing response lines.",
+      "default": "response",
       "sensitive": false
     },
     "idle_label": {
       "type": "string",
       "title": "Idle label",
-      "description": "Label for the 'time since last response' delta. Default: idle",
+      "description": "Label for the 'time since last response' delta.",
+      "default": "idle",
       "sensitive": false
     },
     "took_label": {
       "type": "string",
       "title": "Took label",
-      "description": "Label for the response-duration delta. Default: took",
+      "description": "Label for the response-duration delta.",
+      "default": "took",
       "sensitive": false
     },
     "session_label": {
       "type": "string",
       "title": "Session label",
-      "description": "Label for the session-elapsed suffix (only shown when Show session elapsed is on). Default: session",
+      "description": "Label for the session-elapsed suffix (only shown when Show session elapsed is on).",
+      "default": "session",
       "sensitive": false
     },
     "subagent_label": {
       "type": "string",
       "title": "Subagent label",
-      "description": "Label for subagent timing lines. Default: subagent",
+      "description": "Label for subagent timing lines.",
+      "default": "subagent",
       "sensitive": false
     },
     "recap_label": {
       "type": "string",
       "title": "Recap label",
-      "description": "Prefix for the session-recap line emitted on session end. Default: 'session recap:'",
+      "description": "Prefix for the session-recap line emitted on session end.",
+      "default": "session recap:",
       "sensitive": false
     },
     "show_deltas": {
       "type": "boolean",
       "title": "Show deltas",
-      "description": "Show per-event delta (idle/took) on prompt and response lines. Default: on",
+      "description": "Show per-event delta (idle/took) on prompt and response lines.",
+      "default": true,
       "sensitive": false
     },
     "show_session": {
       "type": "boolean",
       "title": "Show session elapsed",
-      "description": "Append session-elapsed time to every prompt and response line. Default: off",
+      "description": "Append session-elapsed time to every prompt and response line.",
+      "default": false,
       "sensitive": false
     },
     "show_turn": {
       "type": "boolean",
       "title": "Show turn counter",
-      "description": "Prefix prompt and response lines with a per-session turn counter (#1, #2, ...). Default: off",
+      "description": "Prefix prompt and response lines with a per-session turn counter (#1, #2, ...).",
+      "default": false,
       "sensitive": false
     },
     "log_history": {
       "type": "boolean",
       "title": "Log event history",
-      "description": "Append every event as a JSON line to a monthly history log in the plugin data dir. Default: off",
+      "description": "Append every event as a JSON line to a monthly history log in the plugin data dir.",
+      "default": false,
       "sensitive": false
     },
     "recap_min_turns": {
       "type": "number",
       "title": "Recap threshold (turns)",
-      "description": "Only emit the session recap when the session had at least this many turns. Default: 3",
+      "description": "Only emit the session recap when the session had at least this many turns.",
+      "default": 3,
       "sensitive": false
     },
     "log_months": {
       "type": "number",
       "title": "History retention (months)",
-      "description": "Delete history-YYYY-MM.jsonl files older than this many months. 0 disables pruning. Default: 12",
+      "description": "Delete history-YYYY-MM.jsonl files older than this many months. 0 disables pruning.",
+      "default": 12,
       "sensitive": false
     },
     "sanity_cap": {
       "type": "number",
       "title": "Sanity cap (seconds)",
-      "description": "Suppress any delta larger than this many seconds (guards against stale state from crashed sessions). Default: 86400 (24h)",
+      "description": "Suppress any delta larger than this many seconds (guards against stale state from crashed sessions). 86400 = 24h.",
+      "default": 86400,
       "sensitive": false
     },
     "cleanup_days": {
       "type": "number",
       "title": "State cleanup (days)",
-      "description": "Delete per-session state files older than this many days. 0 disables cleanup. Default: 30",
+      "description": "Delete per-session state files older than this many days. 0 disables cleanup.",
+      "default": 30,
       "sensitive": false
     }
   }
